@@ -9,9 +9,11 @@ if (!isset($_SESSION['admin'])) {
 include "connect.php";
 
 if (isset($_POST['add'])) {
+    $id = $_POST['id'];
     $name = $_POST['name']; 
-    $email = $_POST['email'];  
-    
+    $description = $_POST['description'];
+    $price = $_POST['price'];
+
     $image = '';
     if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
         $target_dir = "uploads/";
@@ -20,19 +22,20 @@ if (isset($_POST['add'])) {
         }
         $target_file = $target_dir . basename($_FILES["image"]["name"]);
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-        
+
         $check = getimagesize($_FILES["image"]["tmp_name"]);
         if ($check !== false) {
             $image = uniqid() . '.' . $imageFileType;
             $target_file = $target_dir . $image;
-            
+
             if (!move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
                 $image = '';
             }
         }
     }
-    
-    $conn->query("INSERT INTO users (name, email, image) VALUES ('$name', '$email', '$image')");
+
+    $conn->query("INSERT INTO users (id, name, description, price, image) 
+                  VALUES ('$id', '$name', '$description', '$price', '$image')");
 }
 
 $result = $conn->query("SELECT * FROM users ORDER BY id DESC");
@@ -57,13 +60,19 @@ $result = $conn->query("SELECT * FROM users ORDER BY id DESC");
 <body>
 <div class="container mt-4">
     <h3>User Management</h3>
-    
+
     <form method="POST" class="row g-2 mt-2" enctype="multipart/form-data">
+        <div class="col-auto">
+            <input type="number" name="id" placeholder="ID" class="form-control" required>
+        </div>
         <div class="col-auto">
             <input type="text" name="name" placeholder="Name" class="form-control" required>
         </div>
         <div class="col-auto">
-            <input type="email" name="email" placeholder="Email" class="form-control" required>
+            <input type="text" name="description" placeholder="Description" class="form-control" required>
+        </div>
+        <div class="col-auto">
+            <input type="number" step="0.01" name="price" placeholder="Price" class="form-control" required>
         </div>
         <div class="col-auto">
             <input type="file" name="image" class="form-control" accept="image/*">
@@ -72,14 +81,15 @@ $result = $conn->query("SELECT * FROM users ORDER BY id DESC");
             <button class="btn btn-success" name="add">Add User</button>
         </div>
     </form>
-    
+
     <table class="table table-bordered table-striped mt-4">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Image</th>
                 <th>Name</th>
-                <th>Email</th>
+                <th>Description</th>
+                <th>Price</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -95,7 +105,8 @@ $result = $conn->query("SELECT * FROM users ORDER BY id DESC");
                         <?php endif; ?>
                     </td>
                     <td><?= $row['name'] ?></td>
-                    <td><?= $row['email'] ?></td>
+                    <td><?= $row['description'] ?></td>
+                    <td>$<?= $row['price'] ?></td>
                     <td>
                         <a href="edit.php?id=<?= $row['id'] ?>" class="btn btn-primary btn-sm">Edit</a>
                         <a href="delete.php?id=<?= $row['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this user?')">Delete</a>
@@ -104,7 +115,7 @@ $result = $conn->query("SELECT * FROM users ORDER BY id DESC");
             <?php endwhile; ?>
         </tbody>
     </table>
-    
+
     <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
 </div>
 
